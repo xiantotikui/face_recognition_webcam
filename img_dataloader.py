@@ -59,6 +59,10 @@ class TripletGenerator:
 
             a_img = np.flip(random.choice(video), 1) / 255
             p_img = np.flip(random.choice(video), 1) / 255
+            
+            while (a_img[0][0][0] == p_img[0][0][0]) or (a_img[-1][-1][-1] == p_img[-1][-1][-1]):
+                p_img = random.choice(video)
+            
             n_img = np.flip(n_img, 1) / 255
 
             a_array.append(a_img)

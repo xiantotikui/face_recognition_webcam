@@ -1,6 +1,6 @@
 import cv2
 import sys
-from collections import deque
+from collections import deque, Counter
 from data.model import create_model
 from img_dataloader import TripletGenerator
 from keras.models import Model
@@ -47,8 +47,9 @@ face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 
 video_capture = cv2.VideoCapture(0)
 
-frames = deque(maxlen=2)
+frames = deque(maxlen=8)
 
+times = []
 while True:
     ret, frame = video_capture.read()
 
@@ -64,11 +65,13 @@ while True:
         a, p, n = triplet.generator_from_webcam(4, './out_img', frames)
         predictions = predict.predict([a, p, n], batch_size=4, verbose=0)
         predictions = np.argmax(predictions, axis=1)
-        print(predictions)
-        cv2.imshow("Video", frames[0])
+        times.append([predictions])
+        cv2.imshow("Video", frames[-1])
+    times_np_arr = np.asarray(times).flatten()
+    print(Counter(times_np_arr).most_common(3))
 
     if cv2.waitKey(1) & 0xFF == ord('q'):
         break
-
+    
 video_capture.release()
 cv2.destroyAllWindows()
