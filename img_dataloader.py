@@ -45,3 +45,25 @@ class TripletGenerator:
             print(i)
 
         return(a_array, p_array, n_array, y_array)
+
+    def generator_from_webcam(self, examples, input, video):
+        a_array = []
+        p_array = []
+        n_array = []
+        files = iter(os.listdir(input))
+        for i in range(examples):
+            n = random.choice(os.listdir(input))
+            n_path = os.path.join(input, n)
+            n_file = random.choice(os.listdir(n_path))
+            n_img = cv2.imread(os.path.join(n_path, n_file))
+
+            a_img = np.flip(random.choice(video), 1) / 255
+            p_img = np.flip(random.choice(video), 1) / 255
+            n_img = np.flip(n_img, 1) / 255
+
+            a_array.append(a_img)
+            p_array.append(p_img)
+            n_array.append(n_img)
+
+        return(a_array, p_array, n_array)
+
