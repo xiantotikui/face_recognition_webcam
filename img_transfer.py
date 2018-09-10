@@ -32,15 +32,15 @@ train.load_weights(READY_WEIGHTS_PATH)
 for layer in train.layers:
     layer.trainable = False
 
-x0, x1, x2 = train.output
-x = Subtract()([x1, x2])
-x = Concatenate()([x0, x])
+a, p, n = train.output
+dist = Subtract()([p, n])
+x = Concatenate()([a, dist])
 x = Dense(128, activation="relu")(x)
 x = Dropout(0.2)(x)
 x = Dense(128, activation="relu")(x)
 predictions = Dense(NUMBER_CLASSES, activation="softmax")(x)
 
-transfer = Model(inputs=train.input, outputs=predictions)
+transfer = Model(train.input, predictions)
 
 transfer.compile(loss="categorical_crossentropy", optimizer='adam', metrics=["accuracy"])
 
@@ -58,6 +58,6 @@ for y in data_y:
 		if y == key:
 			labels.append(val)
 
-transfer.fit([dataset_a, dataset_p, dataset_n], np.asarray(labels), shuffle=True, batch_size=4, epochs=300, callbacks=[save_weights])
+transfer.fit([dataset_a, dataset_p, dataset_n], np.asarray(labels), shuffle=True, batch_size=4, epochs=120, callbacks=[save_weights])
 
 transfer.save_weights(WEIGHTS_PATH)

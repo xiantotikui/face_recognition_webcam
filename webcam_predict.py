@@ -9,6 +9,7 @@ from keras.layers.core import Dropout, Dense
 from keras.layers import Subtract, Concatenate
 import numpy as np
 import os
+import pickle
 
 WEIGHTS_TRANSFER_PATH = './weights/transfer.final.hdf5'
 
@@ -29,15 +30,15 @@ transfer = Model([in_a, in_p, in_n], [emb_a, emb_p, emb_n])
 for layer in transfer.layers:
     layer.trainable = False
 
-x0, x1, x2 = transfer.output
-x = Subtract()([x1, x2])
-x = Concatenate()([x0, x])
+a, p, n = transfer.output
+dist = Subtract()([p, n])
+x = Concatenate()([a, dist])
 x = Dense(128, activation="relu")(x)
 x = Dropout(0.2)(x)
 x = Dense(128, activation="relu")(x)
 predictions = Dense(NUMBER_CLASSES, activation="softmax")(x)
 
-predict = Model(inputs=transfer.input, outputs=predictions)
+predict = Model(transfer.input, predictions)
 predict.load_weights(WEIGHTS_TRANSFER_PATH)
 predict.compile(loss="categorical_crossentropy", optimizer='adam', metrics=["accuracy"])
 
@@ -48,6 +49,13 @@ face_cascade = cv2.CascadeClassifier('haarcascade_frontalface_default.xml')
 video_capture = cv2.VideoCapture(0)
 
 frames = deque(maxlen=8)
+
+with open(os.path.join('./labels', 'labels_100.pb'), 'rb') as fp:
+    labels_file = pickle.load(fp)
+
+labels = []
+for key, val in labels_file.items():
+	labels.append(key)
 
 times = []
 while True:
@@ -65,7 +73,10 @@ while True:
         a, p, n = triplet.generator_from_webcam(4, './out_img', frames)
         predictions = predict.predict([a, p, n], batch_size=4, verbose=0)
         predictions = np.argmax(predictions, axis=1)
-        times.append([predictions])
+        tmp = []
+        for prediction in predictions:
+        	tmp.append(labels[prediction])
+        times.append([tmp])
         cv2.imshow("Video", frames[-1])
     times_np_arr = np.asarray(times).flatten()
     print(Counter(times_np_arr).most_common(3))
